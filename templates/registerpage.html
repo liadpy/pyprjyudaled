@@ -1,0 +1,15 @@
+{% extends "base.html "%}
+{% block title %}loginpage{% endblock %}
+ 
+{% block content %}
+<form action="#" method="post">
+    <h1>Register</h1>
+    <h4>UserName:</h4>
+    <h6>cannot include spaces , symbols or be empty </h6>
+    <p><input type="text" name ="usrnamereg"/></p>
+    <h4>Password:</h4>
+    <h6>cannot include spaces , symbols or be empty </h6>
+    <p><input type="text" name ="pwreg"/></p>
+    <p><input type="submit" name ="submitbtnreg"/></p>
+</form>
+{% endblock %}

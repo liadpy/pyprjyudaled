@@ -1,0 +1,15 @@
+{% extends "base.html "%}
+{% block title %}mainpage{% endblock %}
+{% block content %}
+<style>
+    .btn {
+        font-size: 64px;
+        padding: 20px;
+        margin: 50px auto; /* move the button 50px down from the top and center it horizontally */
+        position: relative; /* use absolute positioning to move the button */
+        top: 300px; /* move the button 100px down from its original position */
+        left: 550px; /* move the button 50px to the right of its original position */
+    }
+</style>
+<a href="#" class="btn btn-secondary btn-lg active" role="button" aria-pressed="true" style="font-size: 24px; padding: 20px;">Start Here</a>
+{% endblock %}
