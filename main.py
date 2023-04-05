@@ -1,5 +1,6 @@
-from flask import Flask, render_template ,redirect , request , url_for
+from flask import Flask, render_template ,redirect , request , url_for,Response
 from alldb import *
+from usrwebcam import *
 
 app=Flask(__name__) 
 
@@ -7,6 +8,14 @@ app=Flask(__name__)
 @app.route('/',methods=["POST","GET"])
 def main():
     return render_template('mainpage.html')
+
+
+
+@app.route('/video',methods=["POST","GET"])
+def video():
+    return Response(generate_frames(),mimetype='multipart/x-mixed-replace; boundary=frame')
+
+
 
 
 
