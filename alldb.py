@@ -1,6 +1,7 @@
 import mysql.connector
 import string
 
+
 def check_if_input_ok_for_db(inpt):
     if inpt == "":
         return False
@@ -29,11 +30,10 @@ def loginusr(password,username):
         for i in x:
             if username in i and password in i:
                 db.close()
-                return True
+                return i
         db.close()
-        return False
-    db.close()    
-    return False
+        return []
+    return []
 
 
 
@@ -55,17 +55,16 @@ def registerusr(password , username):
         c.execute("SELECT * FROM users")  #checking if user exists...
         x = c.fetchall()
         for i in x:
-            print(i)
             if username in i or password in i:
-                print("no sucsses")
-                return False
+                return []
         c.execute(f"""INSERT INTO users (username,password) 
         VALUES ('{username}', '{password}');""")           #if user dosent exists... insert
+        c.execute(f"SELECT * FROM users where username = '{username}' and password= '{password}'")
+        i=c.fetchone()
         db.commit()  # save
         db.close()
-        return True
-    print("no sucsses")
-    return False
+        return i
+    return []
 
 
         
