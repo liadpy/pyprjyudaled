@@ -1,22 +1,46 @@
-from flask import Flask, render_template ,redirect , request , url_for,Response,session
+from flask import Flask, render_template ,redirect , request , url_for,Response,session,flash
 from alldb import *
 from usrwebcam import *
 
 app=Flask(__name__) 
 app.secret_key="hellothere"
 
+
+
 @app.route('/',methods=["POST","GET"])
 def main():
-    if "username" not in session:
-        usr="Guest"
+    popupmsg=""
+    if "username" in session:
+            usr=session["username"]
     else:
-        usr=session["username"]
-    return render_template('mainpage.html',username=usr)
+        usr="Guest"
+    if request.method=="POST":
+        if "username" in session:
+            if 'crroombtn' in request.form: #check if my btn was clicked...
+                roomname = request.form["crroomname"]
+                password = request.form["crroompassword"]
+                con =add_room_to_db(roomname,password,session["userid"])
+                if "nice" in con:
+                    return redirect(url_for("room",room=roomname))
+                else:
+                    popupmsg =con
+            elif 'jnroombtn' in request.form:
+                roomname = request.form["jnroomname"]
+                password = request.form["jnroompassword"]
+                con =check_if_can_join_room(roomname,password,session["userid"])
+                if "nice" in con:
+                    return redirect(url_for("room",room=roomname))
+                else:
+                    popupmsg =con
+        else:
+            popupmsg="pls login first"
+    return render_template('mainpage.html',username=usr,popupmsg=popupmsg)
 
 
 
-@app.route('/video',methods=["POST","GET"])
-def video():
+
+@app.route('/<room>',methods=["POST","GET"])
+def room(room):
     return Response(generate_frames(),mimetype='multipart/x-mixed-replace; boundary=frame')
 
 

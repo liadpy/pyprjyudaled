@@ -1,15 +1,90 @@
 {% extends "base.html "%}
 {% block title %}mainpage{% endblock %}
+{% block head %}
+<meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://getbootstrap.com/docs/5.3/assets/css/docs.css" rel="stylesheet">
+    <title>Bootstrap Example</title>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
+	<style>
+		.the2btns {
+		  	display: flex;
+			position: absolute;
+  			top: 50%;
+  			left: 50%;
+  			transform: translate(-50%, -50%);
+			width: 100%;
+		}
+		.dropdown1{
+			position: absolute;
+  			top: 50%;
+  			left: 70%;
+  			transform: translate(-50%, -50%);
+		}
+		.dropdown2{
+			position: absolute;
+  			top: 50%;
+  			left: 30%;
+  			transform: translate(-50%, -50%);
+		}
+		.poptext1{
+			position: absolute;
+  			top: 40%;
+			left: 50%;
+			transform: translate(-50%, -50%);
+			color: crimson;
+			text-align: center;
+			margin: auto;
+			padding: 10px;
+			width: 36%;
+		
+		
+		}		
+	  </style>
+{% endblock %}
 {% block content %}
-<style>
-    .btn {
-        font-size: 64px;
-        padding: 20px;
-        margin: 50px auto; /* move the button 50px down from the top and center it horizontally */
-        position: relative; /* use absolute positioning to move the button */
-        top: 300px; /* move the button 100px down from its original position */
-        left: 550px; /* move the button 50px to the right of its original position */
-    }
-</style>
-<a href="#" class="btn btn-secondary btn-lg active" role="button" aria-pressed="true" style="font-size: 24px; padding: 20px;">Start Here</a>
+<div class ="poptext1" >
+<p name="popuptxt1">
+	{{popupmsg}}
+</p>
+</div>
+<div class="the2btns">
+	<div class="dropdown1">
+		<button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" data-bs-auto-close="outside">
+		Join a Meeting!
+		</button>
+		<form class="dropdown-menu p-4" method="post">
+		<div class="mb-3">
+			<label  class="form-label">Room Name</label>
+			<input  class="form-control" placeholder="enter room name" name="jnroomname">
+		</div>	
+		<div class="mb-3">
+			<label class="form-label">Password</label>
+			<input  class="form-control"  placeholder="enter room password" name="jnroompassword">
+		</div>
+		<button type="submit" class="btn btn-primary" name="jnroombtn">Join!</button>
+		</form>
+	</div>
+
+
+
+	<div class="dropdown2">
+		<button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" data-bs-auto-close="outside">
+		Start a Meeting!
+		</button>
+		<form class="dropdown-menu p-4" method="post">
+		<div class="mb-3">
+			<label class="form-label">Room Name</label>
+			<input class="form-control"  placeholder="enter the room name u want" name="crroomname">
+		</div>
+		<div class="mb-3">
+			<label for="exampleDropdownFormPassword2" class="form-label">Password</label>
+			<input  class="form-control"  placeholder="enter the password name u want" name="crroompassword">
+		</div>
+
+		<button type="submit" class="btn btn-primary" name="crroombtn">Create My Room!</button>
+		</form>
+	</div>
+</div>
 {% endblock %}
