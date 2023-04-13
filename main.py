@@ -1,9 +1,14 @@
 from flask import Flask, render_template ,redirect , request , url_for,Response,session,flash
 from alldb import *
 from usrwebcam import *
+from allsocks import *
+from flask_socketio import SocketIO,send
+
 
 app=Flask(__name__) 
 app.secret_key="hellothere"
+socketio = SocketIO(app,cors_allowed_origins="*")
+
 
 
 
@@ -41,7 +46,7 @@ def main():
 
 @app.route('/<room>',methods=["POST","GET"])
 def room(room):
-    return Response(generate_frames(),mimetype='multipart/x-mixed-replace; boundary=frame')
+    return render_template("webcamvid.html")
 
 
 
@@ -80,10 +85,6 @@ def login():
     
 
 
-
-
-
-
 @app.route('/register',methods=["POST","GET"])
 def register():
     if request.method=="POST":
@@ -105,6 +106,9 @@ def register():
         return render_template('registerpage.html',username=usr)
 
 
+@app.route('/video')
+def video():
+    return Response(generate_frames(),mimetype='multipart/x-mixed-replace; boundary=frame')
 
 
 

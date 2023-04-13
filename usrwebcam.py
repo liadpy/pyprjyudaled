@@ -2,7 +2,9 @@ import cv2
 
 def generate_frames():
     camera=cv2.VideoCapture(0)
-    while True:         
+    while True:
+            
+        ## read the camera frame
         success,frame=camera.read()
         if not success:
             break
