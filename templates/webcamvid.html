@@ -53,10 +53,32 @@
 </style>
 {% endblock %}
 {% block content %}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.6.1/socket.io.js"></script>
+    <script type="text/javascript">
+      var socket = io.connect('http://localhost:5000');
+
+      socket.on('get_txt_message', function(message) {
+        $('#chat-container').append('<p>' + message + '</p>');
+    });
+      socket.on('connect', function() {
+      console.log('Connected to server');
+    });
+      socket.on('error', function(err) {
+      console.log('Socket error:', err);
+    });
+
+      function sendtxtMessage() {
+            var message = $('#txtinptchat').val();
+            $('#txtinptchat').val('');
+            socket.emit('message', message);
+      }
+
+    </script>
 <div class="page_container">
   <div class="sendtxtbox">
     <input id="txtinptchat" type="text" class="form-control" placeholder="type a message to chat!" aria-describedby="button-addon2">
-    <button class="btn btn-outline-secondary" type="button" id="txtbtnchat">Send</button>
+    <button class="btn btn-outline-secondary" type="button" id="txtbtnchat" onclick="sendtxtMessage()">Send</button>
   </div>
   <div class="filecon">
     <input class="form-control form-control-lg" id="formFileLg" type="file">
@@ -65,46 +87,9 @@
     <div class="uservideo">
       <img src="{{ url_for('video') }}" width="50%"/>
     </div>
-	<div class="chat-container">
-		<div class="message">
-			<span class="sender">John:</span> Hi there!
-		</div>
-		<div class="message">
-			<span class="sender">Jane:</span> Hey John, how are you?
-		</div>
-		<div class="message">
-			<span class="sender">John:</span> I'm doing well, thanks. How about you?
-		</div>
-		<div class="message">
-			<span class="sender">Jane:</span> Pretty good. What have you been up to lately?
-		</div>
-		<div class="message">
-			<span class="sender">John:</span> Not much, just working on some projects. How about you?
-		</div>
-		<div class="message">
-			<span class="sender">Jane:</span> Same here, just trying to stay busy. By the way, have you seen the new movie that came out last week?
-		</div>
-		<div class="message">
-			<span class="sender">John:</span> No, I haven't. What's it called?
-		</div>
-		<div class="message">
-			<span class="sender">Jane:</span> It's called "The Avengers". It's supposed to be really good.
-		</div>
-		<div class="message">
-			<span class="sender">John:</span> Oh cool, I'll have to check it out. Thanks for the recommendation.
-		</div>
-    <div class="message">
-			<span class="sender">John:</span> Oh cool, I'll have to check it out. Thanks for the recommendation.
-		</div>
-    <div class="message">
-			<span class="sender">John:</span> Oh cool, I'll have to check it out. Thanks for the recommendation.
-		</div>
-    <div class="message">
-			<span class="sender">John:</span> Oh cool, I'll have to check it out. Thanks for the recommendation.
-		</div>
-    <div class="message">
-			<span class="sender">John:</span> Oh cool, I'll have to check it out. Thanks for the recommendation.
-		</div>
+
+	<div class="chat-container" id="chat-container">
+		<p> this is the chat! </p>
 	</div>
-</div>
+</div> 
 {% endblock %}            

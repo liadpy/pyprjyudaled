@@ -2,7 +2,7 @@ from flask import Flask, render_template ,redirect , request , url_for,Response,
 from alldb import *
 from usrwebcam import *
 from allsocks import *
-from flask_socketio import SocketIO,send
+from flask_socketio import SocketIO,send ,emit,join_room,leave_room
 
 
 app=Flask(__name__) 
@@ -42,12 +42,9 @@ def main():
     return render_template('mainpage.html',username=usr,popupmsg=popupmsg)
 
 
-
-
 @app.route('/<room>',methods=["POST","GET"])
 def room(room):
     return render_template("webcamvid.html")
-
 
 
 
@@ -110,7 +107,12 @@ def register():
 def video():
     return Response(generate_frames(),mimetype='multipart/x-mixed-replace; boundary=frame')
 
+@socketio.on('message')
+def handle_message(message):
+    print("\n\ngot the txt msg\n\n "+message)
+    emit('get_txt_message', message, broadcast=True)
 
 
 if __name__ =="__main__":
+    socketio.run(app)
     app.run(debug=True)
