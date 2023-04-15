@@ -112,6 +112,14 @@ def handle_message(message):
     print("\n\ngot the txt msg\n\n "+message)
     emit('get_txt_message', message, broadcast=True)
 
+@socketio.on('joinroom')
+def joinroom(data):
+    roomname=data["roomname"]
+    roompassword=data["roompassword"]
+    mode=data["mode"]# start or join
+    print("\n\n\n\ngot "+roomname+ roompassword +mode+"\n\n\n\n")
+
+
 
 if __name__ =="__main__":
     socketio.run(app)

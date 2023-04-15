@@ -44,6 +44,28 @@
 	  </style>
 {% endblock %}
 {% block content %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.6.1/socket.io.js"></script>
+    <script type="text/javascript">
+      var socket = io.connect('http://localhost:5000');
+	  socket.on('connect', function() {
+      console.log('Connected to server');
+    });
+      socket.on('error', function(err) {
+      console.log('Socket error:', err);
+    });
+	  function joinroom() {
+            var roomname = $('#rnj').val();
+			var roompassword = $('#rpj').val();
+            socket.emit('joinroom', {'roomname': roomname, 'roompassword': roompassword,'mode':"join"});
+      }
+	  function startroom() {
+            var roomname = $('#srn').val();
+			var roompassword = $('#srp').val();
+            socket.emit('joinroom', {'roomname': roomname, 'roompassword': roompassword ,'mode':"start"});
+      }
+
+    </script>
 <div class ="poptext1" >
 <p name="popuptxt1">
 	{{popupmsg}}
@@ -51,39 +73,39 @@
 </div>
 <div class="the2btns">
 	<div class="dropdown1">
-		<button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" data-bs-auto-close="outside">
+		<button type="button"  class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" data-bs-auto-close="outside">
 		Join a Meeting!
 		</button>
 		<form class="dropdown-menu p-4" method="post">
 		<div class="mb-3">
 			<label  class="form-label">Room Name</label>
-			<input  class="form-control" placeholder="enter room name" name="jnroomname">
+			<input  class="form-control" id="rnj" placeholder="enter room name" name="jnroomname">
 		</div>	
 		<div class="mb-3">
 			<label class="form-label">Password</label>
-			<input  class="form-control"  placeholder="enter room password" name="jnroompassword">
+			<input  class="form-control" id="rpj"  placeholder="enter room password" name="jnroompassword">
 		</div>
-		<button type="submit" class="btn btn-primary" name="jnroombtn">Join!</button>
+		<button type="submit" onclick="joinroom()" class="btn btn-primary" name="jnroombtn">Join!</button>
 		</form>
 	</div>
 
 
 
 	<div class="dropdown2">
-		<button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" data-bs-auto-close="outside">
+		<button type="button"  class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" data-bs-auto-close="outside">
 		Start a Meeting!
 		</button>
 		<form class="dropdown-menu p-4" method="post">
 		<div class="mb-3">
 			<label class="form-label">Room Name</label>
-			<input class="form-control"  placeholder="enter the room name u want" name="crroomname">
+			<input class="form-control" id="srn" placeholder="enter the room name u want" name="crroomname">
 		</div>
 		<div class="mb-3">
 			<label for="exampleDropdownFormPassword2" class="form-label">Password</label>
-			<input  class="form-control"  placeholder="enter the password name u want" name="crroompassword">
+			<input  class="form-control" id="srp"  placeholder="enter the password name u want" name="crroompassword">
 		</div>
 
-		<button type="submit" class="btn btn-primary" name="crroombtn">Create My Room!</button>
+		<button type="submit" onclick="startroom()" class="btn btn-primary" name="crroombtn">Create My Room!</button>
 		</form>
 	</div>
 </div>

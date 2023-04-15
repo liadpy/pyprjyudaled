@@ -25,7 +25,6 @@ def check_if_can_join_room(roomname,password,usrid):
         c.execute("SELECT * FROM rooms")
         x=c.fetchall()
         for i in x:
-            print (i)
             if(roomname in i and password in i and i[-1]=="open"):
                 c.execute(f"""UPDATE rooms SET connected_users = CONCAT(connected_users, '{usrid},') WHERE roomname='{roomname}' and roompassword='{password}' ;""")
                 db.commit()
@@ -58,7 +57,6 @@ def add_room_to_db(roomname,password,usrid):
         c.execute("SELECT * FROM rooms")
         x=c.fetchall()
         for i in x:
-            print (i)
             if(usrid in i and i[-1]=="open"):
                 return "u have an opened room"
             if(roomname in i and password in i):
