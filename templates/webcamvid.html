@@ -59,10 +59,51 @@
     width: 35%;
     height: 10%;
   }
+  .grid-container {
+  display: grid;
+  grid-template-columns: auto auto;
+  gap: 5px;
+  padding: 10px;
+  width: 60%;
+  height: 40%;
+}
+
+.grid-container > div {
+  background-color: rgba(56, 56, 56, 0.8);
+  border: 3px solid black;
+  
+
+  
+}
+.vid{
+  width: 100%;
+  height: 100%;
+}
 </style>
 {% endblock %}
 {% block content %}
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
+    
+<div class="page_container">
+  <div>
+    <h3>roomname : {{roomname}} | roompassword : {{roompassword}}</h3><br>
+    <div class="grid-container">
+      <div ><video autoplay="true" id="videoElement" class="vid" ></video></div>
+    </div>
+  </div>
+  
+  <div class="sendtxtbox">
+    <input id="txtinptchat" type="text" class="form-control" placeholder="type a message to chat!" aria-describedby="button-addon2">
+    <button class="btn btn-outline-secondary" type="button" id="txtbtnchat" onclick="sendtxtMessage()">Send</button>
+  </div>
+    <div class="uservideo">
+      <img src="{{ url_for('video') }}" width="50%"/>
+    </div>
+
+	<div class="chat-container" id="chat-container">
+		<p> this is the chat! </p>
+	</div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.6.1/socket.io.js"></script>
     <script src="/static/simplewebrtc.bundle.js"></script>
     <script src="/static/socket.io.js"></script>
@@ -70,7 +111,18 @@
       var socketio = io();
 
       const messages = document.getElementById("chat-container");
+      let video = document.querySelector("#videoElement");
 
+  if (navigator.mediaDevices.getUserMedia) {
+    navigator.mediaDevices.getUserMedia({ video: true })
+    .then(function (stream) {
+      video.srcObject = stream;
+    })
+    .catch(function (err0r) {
+      document.write(err0r)
+      console.log("Something went wrong!");
+    });
+}
       const createMessage = (name, msg) => { //create new msg to apper in chat
         //document.write("fadsffdsafafsda");
         const content = `
@@ -95,26 +147,5 @@
     socketio.emit("txtmessage", { data: message.value });
     message.value = "";
       }   
-    </script>          
-    
-<div class="page_container">
-  <div>
-    <h3>roomname : {{roomname}}  | roompassword : {{roompassword}}</h3>
-  </div>
-  <div class="sendtxtbox">
-    <input id="txtinptchat" type="text" class="form-control" placeholder="type a message to chat!" aria-describedby="button-addon2">
-    <button class="btn btn-outline-secondary" type="button" id="txtbtnchat" onclick="sendtxtMessage()">Send</button>
-  </div>
-  <div class="filecon">
-    <input class="form-control form-control-lg" id="formFileLg" type="file">
-    <button type="button" class="sendfilebtn">send file</button>
-  </div>
-    <div class="uservideo">
-      <img src="{{ url_for('video') }}" width="50%"/>
-    </div>
-
-	<div class="chat-container" id="chat-container">
-		<p> this is the chat! </p>
-	</div>
-</div> 
+    </script>
 {% endblock %}            

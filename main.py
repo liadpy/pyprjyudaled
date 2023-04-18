@@ -13,7 +13,6 @@ roomdict={}
 
 @app.route('/',methods=["POST","GET"])
 def main():
-    #TODO maybe clear room from session
     if "room" in session:
         session.pop("room",None)
     if request.method=="POST":
@@ -52,7 +51,7 @@ def main():
 def room(room):#room var is the room name
     if "room" not in session:
         return redirect(url_for('main'))
-    return render_template("webcamvid.html",roomname=room,roompassword=session.get("roompassword"),messages=roomdict[session.get('room')]["msgs"])
+    return render_template("webcamvid.html",roomname=room,roompassword=session.get("roompassword"))
 
 
 
