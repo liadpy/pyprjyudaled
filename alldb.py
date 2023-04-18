@@ -57,8 +57,6 @@ def add_room_to_db(roomname,password,usrid):
         c.execute("SELECT * FROM rooms")
         x=c.fetchall()
         for i in x:
-            if(usrid in i and i[-1]=="open"):
-                return "u have an opened room"
             if(roomname in i and password in i):
                 return "this room already exists try other room name or password"
         current_time = datetime.datetime.now().time()

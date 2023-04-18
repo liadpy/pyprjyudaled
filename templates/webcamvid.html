@@ -7,12 +7,21 @@
   }
   .chat-container {
     overflow-y: scroll;
-    border: 1px solid #ccc;
     padding: 10px;
     width: 20%;
     height: 90%;
     left: 80%;
     position: absolute;
+    border-color: black;
+    border-width: 2px;
+    border-style: solid;
+    border-radius: 10px;
+    background-color: whitesmoke;
+    height: 80vh;
+    display: flex;
+    flex-direction: column;
+    width: 80vw;
+    align-items: stretch;
   }
   .message {
     margin-bottom: 10px;
@@ -55,27 +64,43 @@
 {% block content %}
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.6.1/socket.io.js"></script>
+    <script src="/static/simplewebrtc.bundle.js"></script>
+    <script src="/static/socket.io.js"></script>
     <script type="text/javascript">
-      var socket = io.connect('http://localhost:5000');
+      var socketio = io();
 
-      socket.on('get_txt_message', function(message) {
-        $('#chat-container').append('<p>' + message + '</p>');
-    });
-      socket.on('connect', function() {
-      console.log('Connected to server');
-    });
-      socket.on('error', function(err) {
-      console.log('Socket error:', err);
-    });
+      const messages = document.getElementById("chat-container");
 
-      function sendtxtMessage() {
-            var message = $('#txtinptchat').val();
-            $('#txtinptchat').val('');
-            socket.emit('message', message);
-      }
+      const createMessage = (name, msg) => { //create new msg to apper in chat
+        //document.write("fadsffdsafafsda");
+        const content = `
+        <div class="text">
+            <span>
+                <strong>${name}</strong>: ${msg}
+            </span>
+        </div>
+        `;
+        $('#chat-container').append(content);
+      };                                        
 
-    </script>
+      socketio.on("message", (data) => {          //activates when i get a msg from the server
+        createMessage(data.name, data.message);
+      }); 
+
+
+
+      const sendtxtMessage=()=>{                  //sendtxtMessage func
+        const message = document.getElementById("txtinptchat");
+    if (message.value == "") return;
+    socketio.emit("txtmessage", { data: message.value });
+    message.value = "";
+      }   
+    </script>          
+    
 <div class="page_container">
+  <div>
+    <h3>roomname : {{roomname}}  | roompassword : {{roompassword}}</h3>
+  </div>
   <div class="sendtxtbox">
     <input id="txtinptchat" type="text" class="form-control" placeholder="type a message to chat!" aria-describedby="button-addon2">
     <button class="btn btn-outline-secondary" type="button" id="txtbtnchat" onclick="sendtxtMessage()">Send</button>

@@ -1,4 +1,4 @@
-from flask import Flask, render_template ,redirect , request , url_for,Response,session,flash
+from flask import Flask, render_template ,redirect , request , url_for,Response,session
 from alldb import *
 from usrwebcam import *
 from allsocks import *
@@ -8,43 +8,51 @@ from flask_socketio import SocketIO,send ,emit,join_room,leave_room
 app=Flask(__name__) 
 app.secret_key="hellothere"
 socketio = SocketIO(app,cors_allowed_origins="*")
-
-
+roomdict={}
 
 
 @app.route('/',methods=["POST","GET"])
 def main():
-    popupmsg=""
+    #TODO maybe clear room from session
+    if "room" in session:
+        session.pop("room",None)
+    if request.method=="POST":
+        if "username" not in session:
+            return render_template('mainpage.html',username="Guest",popupmsg="pls login first")
+        if 'crroombtn' in request.form: #check if my btn was clicked...
+            roomname = request.form["crroomname"]
+            password = request.form["crroompassword"]
+            con =add_room_to_db(roomname,password,session["userid"])
+            if "nice" in con:
+                roomid=roomname+password
+                roomdict[roomid]={"members":0,"msgs":[]}
+                session["room"]=roomid
+                session["roompassword"]=password
+                return redirect(url_for("room",room=roomname))
+            else:
+                return render_template('mainpage.html',username=session["username"],popupmsg=con)
+        elif 'jnroombtn' in request.form:
+            roomname = request.form["jnroomname"]
+            password = request.form["jnroompassword"]
+            con =check_if_can_join_room(roomname,password,session["userid"])
+            if "nice" in con:
+                session["room"]=roomname+password
+                session["roompassword"]=password
+                return redirect(url_for("room",room=roomname))
+            else:
+                render_template('mainpage.html',username=session["username"],popupmsg=con)
     if "username" in session:
-            usr=session["username"]
+        usr=session["username"]
     else:
         usr="Guest"
-    if request.method=="POST":
-        if "username" in session:
-            if 'crroombtn' in request.form: #check if my btn was clicked...
-                roomname = request.form["crroomname"]
-                password = request.form["crroompassword"]
-                con =add_room_to_db(roomname,password,session["userid"])
-                if "nice" in con:
-                    return redirect(url_for("room",room=roomname))
-                else:
-                    popupmsg =con
-            elif 'jnroombtn' in request.form:
-                roomname = request.form["jnroomname"]
-                password = request.form["jnroompassword"]
-                con =check_if_can_join_room(roomname,password,session["userid"])
-                if "nice" in con:
-                    return redirect(url_for("room",room=roomname))
-                else:
-                    popupmsg =con
-        else:
-            popupmsg="pls login first"
-    return render_template('mainpage.html',username=usr,popupmsg=popupmsg)
+    return render_template('mainpage.html',username=usr)
 
 
 @app.route('/<room>',methods=["POST","GET"])
-def room(room):
-    return render_template("webcamvid.html")
+def room(room):#room var is the room name
+    if "room" not in session:
+        return redirect(url_for('main'))
+    return render_template("webcamvid.html",roomname=room,roompassword=session.get("roompassword"),messages=roomdict[session.get('room')]["msgs"])
 
 
 
@@ -107,20 +115,55 @@ def register():
 def video():
     return Response(generate_frames(),mimetype='multipart/x-mixed-replace; boundary=frame')
 
-@socketio.on('message')
-def handle_message(message):
-    print("\n\ngot the txt msg\n\n "+message)
-    emit('get_txt_message', message, broadcast=True)
 
-@socketio.on('joinroom')
-def joinroom(data):
-    roomname=data["roomname"]
-    roompassword=data["roompassword"]
-    mode=data["mode"]# start or join
-    print("\n\n\n\ngot "+roomname+ roompassword +mode+"\n\n\n\n")
 
+@socketio.on("txtmessage")
+def txtmessage(data):
+    roomid=session.get("room")
+    if roomid not in roomdict:
+        return
+    m={"name":session.get("username"),"message":data["data"]}
+    send(m,to=roomid)
+    roomdict[roomid]["msgs"].append(m)
+    print(f"{session.get('username')} said: {data['data']}")
+
+
+
+
+
+
+@socketio.on("connect") # ativates automatically when client creates the socket
+def connect(auth):
+    roomid=session.get("room")
+    usrname=session.get("username")
+    if not roomid or not usrname : 
+        return
+    if roomid not in roomdict:
+        leave_room(roomid)
+        return
+    join_room(roomid)
+    send({"name":usrname,"message":" has entered the room"},to=roomid)
+    roomdict[roomid]["members"]+=1
+    print(f"{usrname} entered room {roomid}")
+
+
+
+
+@socketio.on("disconnect")# ativates automatically when client disconnects
+def disconnect():
+    roomid = session.get("room")
+    username = session.get("username")
+    leave_room(roomid)
+
+    if room in roomdict:
+        roomdict[roomid]["members"] -= 1
+        if roomdict[roomid]["members"] <= 0:
+            del roomdict[roomid]
+    
+    send({"name": username, "message": "has left the room"}, to=roomid)
+    print(f"{username} has left the room {roomid}")
 
 
 if __name__ =="__main__":
-    socketio.run(app)
+    socketio.run(app,debug=True)
     app.run(debug=True)
