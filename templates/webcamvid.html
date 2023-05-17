@@ -129,21 +129,6 @@
           console.log(error);
         });
 
-
-
-      //let video = document.querySelector("#videoElement1");
-
-//  if (navigator.mediaDevices.getUserMedia) {
-//    navigator.mediaDevices.getUserMedia({ video: true })
-//    .then(function (stream) {
-//      socketio.emit('stream',stream)
-//      //video.srcObject = stream;
-//    })
-//    .catch(function (err0r) {
-//      document.write(err0r)
-//      console.log("Something went wrong!");
-//    });
-//}
       const createMessage = (name, msg) => { //create new msg to apper in chat
         //document.write("fadsffdsafafsda");
         const content = `
@@ -165,16 +150,6 @@
         var vid = document.getElementById('videoElement2');
         vid.srcObject = stream;
       });
-
-//      socketio.on("stream", (stream) => {
-//        
-//        let video = document.querySelector("#videoElement1");
-//        c=c+1
-//        
-//        video.src = window.URL.createObjectURL(stream)        
-//      }); 
-
-
 
       const sendtxtMessage=()=>{                  //sendtxtMessage func
         const message = document.getElementById("txtinptchat");

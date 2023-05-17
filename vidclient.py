@@ -1,107 +1,81 @@
+import math
 import pickle
 import socket
+import secrets
 import struct
-import sys
-import time
-import tkinter as tk
 import threading
-import cv2
-import pyaudio
+import time
+import hashlib
+from Crypto.Cipher import AES
 from PIL import Image, ImageTk
+import cv2
+import tkinter as tk
+
+G=2243 #two big primes
+N=1399
+secret_key=None
+
+username="kkk"
+vid_intention="vid"
+
 
 root = tk.Tk()
 mylabel = tk.Label(root)
-row = 0
-column = 1
+row=0
+column=1
 mylabel.grid(row=row, column=0)
-username = "ttt"
+labelsdict={}
+
+SERVER_MAINPORT=1111
+HEADER=64
+FORMAT='utf-8'
+SERVER_IP="192.168.1.174"
+SERVER_ADDR=(SERVER_IP,SERVER_MAINPORT)
+
+serversocket=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+serversocket.connect(SERVER_ADDR)
 
 cap = cv2.VideoCapture(0)
 
-vidintentionmsg = "vid"
-audiointentionmsg = "audio"
-leaveintentionmsg = "leave"
-
-SERVER_MAINPORT = 1111 #vid port
-SERVER_AUDIOPORT= 1112 #audio port
-HEADER = 64
-FORMAT = 'utf-8'
-DISCONNECT_MSG = "!DISCONNECT"
-SERVER_IP = "192.168.1.174"
-SERVER_ADDR = (SERVER_IP, SERVER_MAINPORT) #vid addr
-SERVER_AUDIO_ADDR = (SERVER_IP, SERVER_AUDIOPORT) #audio addr
-
-serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-serversocket.connect(SERVER_ADDR)
-
-server_audio_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-server_audio_socket.connect(SERVER_AUDIO_ADDR)
-
-CHUNK = 1024  # Number of audio samples per frame
-CHANNELS = 1  # Mono audio
-RATE = 44100  # Sample rate in Hz
-AUDIOFORMAT = pyaudio.paInt16
-
-p = pyaudio.PyAudio()
-stream = p.open(format=AUDIOFORMAT,
-                channels=CHANNELS,
-                rate=RATE,
-                input=True,
-                frames_per_buffer=CHUNK)
-
-output_stream = p.open(format=AUDIOFORMAT,
-                       channels=CHANNELS,
-                       rate=RATE,
-                       output=True)
-
-
-
-def sendtfunc():
+def send_thread():
     while True:
-
-        ret, frame = cap.read()
-
-        if ret:
-            # Convert the frame from OpenCV's BGR format to RGB format
-            rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-
-            # Create an image from the NumPy array
-            img = Image.fromarray(rgb_frame)
-            sendvid(img)
-            photo = ImageTk.PhotoImage(img)
-
-            # Set the image on the label
-            mylabel.config(image=photo)
-            mylabel.image = photo
-
-            # Schedule the update_frame function to run again after 10 milliseconds
-            time.sleep(1 / 30)
-
-            # TODO make audio here
-            send_audio()
+        send_vid()
 
 
-def send_audio():
-    data = stream.read(CHUNK)
 
-    serialized_data = pickle.dumps(data)
-    message_size = struct.pack("L", len(serialized_data))  # taking the data size "L" stands for long
-
-    server_audio_socket.sendall(message_size)
-    server_audio_socket.sendall(serialized_data)
-
-
-def recvtfunc():
-    column = 1
-    labelsdict = {}
+def recv_thread():
+    print("FD")
     while True:
-        if handle_recv_vid(labelsdict,column) :
-            column=column+1
-        handle_recv_audio()
+        intention=recv_msg_from_server()
+        if intention==vid_intention:
+            recv_vid_tuple_from_the_server()
 
 
-def handle_recv_vid(labelsdict, column):
-    a = False
+
+
+
+
+
+def send_vid():
+    ret, frame = cap.read()
+
+    if ret:
+        # Convert the frame from OpenCV's BGR format to RGB format
+        rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+        # Create an image from the NumPy array
+        img = Image.fromarray(rgb_frame)
+        send_img(img)
+        photo = ImageTk.PhotoImage(img)
+
+        # Set the image on the label
+        mylabel.config(image=photo)
+        mylabel.image = photo
+
+        # Schedule the update_frame function to run again after 10 milliseconds
+        time.sleep(1 / 30)
+
+def recv_vid_tuple_from_the_server():
     message_size = serversocket.recv(struct.calcsize("L"))
     message_size = struct.unpack("L", message_size)[0]
     data = b""
@@ -110,70 +84,106 @@ def handle_recv_vid(labelsdict, column):
         if not packet:
             break
         data += packet
-    frametuple = pickle.loads(data)
-    lblid = frametuple[0]
-    if lblid not in labelsdict:
+    tuple_package_to_dec = pickle.loads(data)
+    cipher_dec = AES.new(secret_key, AES.MODE_EAX,tuple_package_to_dec[-1])
+    p_frametuple = cipher_dec.decrypt_and_verify(tuple_package_to_dec[0], tuple_package_to_dec[1])
+    frametuple=pickle.loads(p_frametuple)
+    usrname_lblid = frametuple[0]
+    if usrname_lblid not in labelsdict:
         lbl = tk.Label(root)
+        global column ,row
         lbl.grid(row=row, column=column)
-        labelsdict.update({lblid: lbl})
-        a = True
+        column+=1
+        labelsdict.update({usrname_lblid: lbl})
     photo = ImageTk.PhotoImage(frametuple[-1])
-    labelsdict.get(lblid).config(image=photo)
-    labelsdict.get(lblid).image = photo
-    return a
+    labelsdict.get(usrname_lblid).config(image=photo)
+    labelsdict.get(usrname_lblid).image = photo
+    print("i recved an img!!!")
 
 
-def handle_recv_audio():
-    message_size = server_audio_socket.recv(struct.calcsize("L"))
-    message_size = struct.unpack("L", message_size)[0]
-    data = b""
-    while len(data) < message_size:
-        packet = server_audio_socket.recv(message_size - len(data))
-        if not packet:
-            break
-        data += packet
-    audiodata = pickle.loads(data)
-    output_stream.write(audiodata)
 
+def send_img(img):
 
-def on_close():  # triggers when client closes the window , notifying the server to close the socket
-    print("closing program , disconnecting you from the server ....")
-    message = leaveintentionmsg.encode(FORMAT)
-    msg_length = len(message)
-    send_length = str(msg_length).encode(FORMAT)
-    send_length += b' ' * (HEADER - len(send_length))
-    serversocket.send(send_length)
-    serversocket.send(message)
-    root.destroy()  # close window
-    time.sleep(0.5)
-    sys.exit()  # TODO find exit program func
-
-
-def sendvid(img):
-    message = vidintentionmsg.encode(FORMAT)
-    msg_length = len(message)
-    send_length = str(msg_length).encode(FORMAT)
-    send_length += b' ' * (HEADER - len(send_length))
-    serversocket.send(send_length)
-    serversocket.send(message)
-
-    l = (username, img)
-    serialized_data = pickle.dumps(l)
-
+    global secret_key
+    t=(username,img)
+    pt=pickle.dumps(t)
+    cipher = AES.new(secret_key, AES.MODE_EAX)
+    ciphertext, tag = cipher.encrypt_and_digest(pt)
+    t2=(ciphertext,tag,cipher.nonce)#ciphertxt is the usr+img tuple
+    serialized_data = pickle.dumps(t2)
     message_size = struct.pack("L", len(serialized_data))  # taking the data size "L" stands for long
 
+    send_message_to_server(vid_intention)
     serversocket.sendall(message_size)
-    serversocket.sendall(serialized_data)
+    serversocket.sendall(serialized_data)#pickle( AES(pickle(usr,img)) ,tag ,nounce )
+    print("image sent from the client")
+
+
+
+def diffie_key_exchange():
+    private_x=secrets.randbits(16) #random 8 bits num
+    print(f"private x ={private_x}")
+    A=modular_exponentiation(G,private_x,N)
+    print(f"A: {A}")
+    send_message_to_server(A)
+    b=recv_msg_from_server()
+    b=int(b)
+    print(f"got b from client {b}")
+    secret_key=modular_exponentiation(b,private_x,N)
+
+
+    # all of this is for converting the shared number from diffie to a 128bit key for the AES
+    key_bytes = secret_key.to_bytes(3, byteorder='big', signed=False).rjust(16, b'\x00')  # converting to bytestring
+    key_padded = key_bytes.rjust(16, b'\x00')
+    salt = b'saltvalue'  # random salt value
+    iterations = 1000  # num of PBKDF2 iterations
+    key_128bit = hashlib.pbkdf2_hmac('sha256', key_padded, salt, iterations, dklen=16)
+    print(f"MYSECRETE KEY IS {key_128bit}")
+
+    return key_128bit
 
 
 
 
 
-sendthread = threading.Thread(target=sendtfunc)
-sendthread.start()
-recvthread = threading.Thread(target=recvtfunc)
-recvthread.start()
 
-root.protocol("WM_DELETE_WINDOW", on_close)
+def send_message_to_server(msg):
+    message = str(msg).encode(FORMAT)  # exchange a,b
+    msg_length = len(message)
+    send_length = str(msg_length).encode(FORMAT)
+    send_length += b' ' * (HEADER - len(send_length))
+    serversocket.send(send_length)
+    serversocket.send(message)
+
+
+def recv_msg_from_server():
+    msg_length = serversocket.recv(HEADER).decode(FORMAT)  # waiting on this line till i get a msg from the client
+    if msg_length:  # if msg not empty
+        msg_length = int(msg_length)
+        m = serversocket.recv(msg_length).decode(FORMAT)
+        return m
+
+def modular_exponentiation(a, b, c):#returns a^b mod c
+    result = 1
+    a = a % c
+    while b > 0:
+        if b % 2 == 1:
+            result = (result * a) % c
+        b = b // 2
+        a = (a * a) % c
+    return result
+
+def init_conn():
+    global secret_key
+    secret_key=diffie_key_exchange()
+    thread = threading.Thread(target=send_thread)
+    thread.start()
+    print("send thread started")
+    thread2=threading.Thread(target=recv_thread)
+    thread2.start()
+    print("recv thread started")
+    print("init done")
+
+init_conn()
+
 root.mainloop()
-
