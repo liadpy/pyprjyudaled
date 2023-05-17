@@ -87,17 +87,23 @@
   <div>
     <h3>roomname : {{roomname}} | roompassword : {{roompassword}}</h3><br>
     <div class="grid-container">
-      <div ><video autoplay="true" id="videoElement" class="vid" ></video></div>
+      <div ><video autoplay="true" id="videoElement1" class="vid" ></video></div>
+      <div ><video autoplay="true" id="videoElement2" class="vid" ></video></div>
+      <div ><video autoplay="true" id="videoElement3" class="vid" ></video></div>
+      <div ><video autoplay="true" id="videoElement4" class="vid" ></video></div>
+      <form method="POST">
+        <div>
+          <button name="opnvid">open video</button>
+        </div>
+      </form>
     </div>
+    
   </div>
   
   <div class="sendtxtbox">
     <input id="txtinptchat" type="text" class="form-control" placeholder="type a message to chat!" aria-describedby="button-addon2">
     <button class="btn btn-outline-secondary" type="button" id="txtbtnchat" onclick="sendtxtMessage()">Send</button>
   </div>
-    <div class="uservideo">
-      <img src="{{ url_for('video') }}" width="50%"/>
-    </div>
 
 	<div class="chat-container" id="chat-container">
 		<p> this is the chat! </p>
@@ -109,20 +115,35 @@
     <script src="/static/socket.io.js"></script>
     <script type="text/javascript">
       var socketio = io();
+      var c=1;
 
       const messages = document.getElementById("chat-container");
-      let video = document.querySelector("#videoElement");
 
-  if (navigator.mediaDevices.getUserMedia) {
-    navigator.mediaDevices.getUserMedia({ video: true })
-    .then(function (stream) {
-      video.srcObject = stream;
-    })
-    .catch(function (err0r) {
-      document.write(err0r)
-      console.log("Something went wrong!");
-    });
-}
+      navigator.mediaDevices.getUserMedia({ video: true })
+        .then(function (stream) {
+          var video = document.getElementById('videoElement1');
+          video.srcObject = stream;
+          socketio.emit('stream', stream);
+        })
+        .catch(function (error) {
+          console.log(error);
+        });
+
+
+
+      //let video = document.querySelector("#videoElement1");
+
+//  if (navigator.mediaDevices.getUserMedia) {
+//    navigator.mediaDevices.getUserMedia({ video: true })
+//    .then(function (stream) {
+//      socketio.emit('stream',stream)
+//      //video.srcObject = stream;
+//    })
+//    .catch(function (err0r) {
+//      document.write(err0r)
+//      console.log("Something went wrong!");
+//    });
+//}
       const createMessage = (name, msg) => { //create new msg to apper in chat
         //document.write("fadsffdsafafsda");
         const content = `
@@ -138,6 +159,20 @@
       socketio.on("message", (data) => {          //activates when i get a msg from the server
         createMessage(data.name, data.message);
       }); 
+
+
+      socketio.on('stream', function (stream) {
+        var vid = document.getElementById('videoElement2');
+        vid.srcObject = stream;
+      });
+
+//      socketio.on("stream", (stream) => {
+//        
+//        let video = document.querySelector("#videoElement1");
+//        c=c+1
+//        
+//        video.src = window.URL.createObjectURL(stream)        
+//      }); 
 
 
 

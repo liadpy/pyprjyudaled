@@ -1,7 +1,6 @@
 from flask import Flask, render_template ,redirect , request , url_for,Response,session
 from alldb import *
-from usrwebcam import *
-from allsocks import *
+from vidserver import *
 from flask_socketio import SocketIO,send ,emit,join_room,leave_room
 
 
@@ -48,9 +47,13 @@ def main():
 
 
 @app.route('/<room>',methods=["POST","GET"])
-def room(room):#room var is the room name
+def room(room):#room var is the room name 
     if "room" not in session:
         return redirect(url_for('main'))
+    if request.method == 'POST':
+        if 'opnvid' in request.form:
+            print("\n\n\n\nfffffffffffff\n\n\n")
+    
     return render_template("webcamvid.html",roomname=room,roompassword=session.get("roompassword"))
 
 
@@ -110,10 +113,14 @@ def register():
         return render_template('registerpage.html',username=usr)
 
 
-@app.route('/video')
-def video():
-    return Response(generate_frames(),mimetype='multipart/x-mixed-replace; boundary=frame')
 
+@socketio.on('stream')
+def stream(stream):
+    roomid=session.get("room")
+    if roomid not in roomdict:
+        return
+    socketio.emit('stream', stream, room=roomid)
+    print(f"{session.get('username')} sent the stream")
 
 
 @socketio.on("txtmessage")

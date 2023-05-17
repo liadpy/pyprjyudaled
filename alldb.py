@@ -39,7 +39,7 @@ def add_room_to_db(roomname,password,usrid):
         db=mysql.connector.connect(
         host="localhost",
         user="root",
-        passwd="meshpuk2133meshpuk2133",
+        passwd="pw",
         database="medb"
         )
         c=db.cursor() #cursor is like something that allows me to do things with the database /////id room_name room_password user_opened time_opened connected_users
