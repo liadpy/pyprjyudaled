@@ -7,6 +7,12 @@ import threading
 import time
 import hashlib
 from Crypto.Cipher import AES
+
+from Crypto.PublicKey import DSA
+from Crypto.Signature import DSS
+from Crypto.Hash import SHA256
+
+
 from PIL import Image, ImageTk
 import cv2
 import tkinter as tk
@@ -17,6 +23,13 @@ secret_key=None
 
 username="kkk"
 vid_intention="vid"
+
+dsa_key = DSA.generate(2048)
+dsa_public_key=dsa_key.public_key().export_key()
+signer = DSS.new(dsa_key, 'fips-186-3')
+server_dsa_public_key=None
+verifier=None
+
 
 
 root = tk.Tk()
@@ -39,6 +52,7 @@ cap = cv2.VideoCapture(0)
 
 def send_thread():
     while True:
+
         send_vid()
 
 
@@ -85,21 +99,26 @@ def recv_vid_tuple_from_the_server():
             break
         data += packet
     tuple_package_to_dec = pickle.loads(data)
-    cipher_dec = AES.new(secret_key, AES.MODE_EAX,tuple_package_to_dec[-1])
-    p_frametuple = cipher_dec.decrypt_and_verify(tuple_package_to_dec[0], tuple_package_to_dec[1])
-    frametuple=pickle.loads(p_frametuple)
-    usrname_lblid = frametuple[0]
-    if usrname_lblid not in labelsdict:
-        lbl = tk.Label(root)
-        global column ,row
-        lbl.grid(row=row, column=column)
-        column+=1
-        labelsdict.update({usrname_lblid: lbl})
-    photo = ImageTk.PhotoImage(frametuple[-1])
-    labelsdict.get(usrname_lblid).config(image=photo)
-    labelsdict.get(usrname_lblid).image = photo
-    print("i recved an img!!!")
+    try:
+        hash_obj = SHA256.new(tuple_package_to_dec[0])
+        verifier.verify(hash_obj, tuple_package_to_dec[3])
 
+        cipher_dec = AES.new(secret_key, AES.MODE_EAX, tuple_package_to_dec[2])
+        p_frametuple = cipher_dec.decrypt_and_verify(tuple_package_to_dec[0], tuple_package_to_dec[1])
+        frametuple = pickle.loads(p_frametuple)
+        usrname_lblid = frametuple[0]
+        if usrname_lblid not in labelsdict:
+            lbl = tk.Label(root)
+            global column, row
+            lbl.grid(row=row, column=column)
+            column += 1
+            labelsdict.update({usrname_lblid: lbl})
+        photo = ImageTk.PhotoImage(frametuple[-1])
+        labelsdict.get(usrname_lblid).config(image=photo)
+        labelsdict.get(usrname_lblid).image = photo
+        print("i recved an img!!!")
+    except ValueError:
+        print("msg not authentic ):")
 
 
 def send_img(img):
@@ -109,13 +128,17 @@ def send_img(img):
     pt=pickle.dumps(t)
     cipher = AES.new(secret_key, AES.MODE_EAX)
     ciphertext, tag = cipher.encrypt_and_digest(pt)
-    t2=(ciphertext,tag,cipher.nonce)#ciphertxt is the usr+img tuple
+
+    hash_obj = SHA256.new(ciphertext) #creating a signature
+    signature =signer.sign(hash_obj)
+
+    t2=(ciphertext,tag,cipher.nonce,signature)#ciphertxt is the usr+img tuple
     serialized_data = pickle.dumps(t2)
     message_size = struct.pack("L", len(serialized_data))  # taking the data size "L" stands for long
 
     send_message_to_server(vid_intention)
     serversocket.sendall(message_size)
-    serversocket.sendall(serialized_data)#pickle( AES(pickle(usr,img)) ,tag ,nounce )
+    serversocket.sendall(serialized_data)#pickle( AES(pickle(usr,img)) ,tag ,nounce,signature)
     print("image sent from the client")
 
 
@@ -135,8 +158,8 @@ def diffie_key_exchange():
     # all of this is for converting the shared number from diffie to a 128bit key for the AES
     key_bytes = secret_key.to_bytes(3, byteorder='big', signed=False).rjust(16, b'\x00')  # converting to bytestring
     key_padded = key_bytes.rjust(16, b'\x00')
-    salt = b'saltvalue'  # random salt value
-    iterations = 1000  # num of PBKDF2 iterations
+    salt = b'saltvalue'  # Random salt value (keep secret)
+    iterations = 1000  # Number of PBKDF2 iterations (choose appropriate value)
     key_128bit = hashlib.pbkdf2_hmac('sha256', key_padded, salt, iterations, dklen=16)
     print(f"MYSECRETE KEY IS {key_128bit}")
 
@@ -173,9 +196,35 @@ def modular_exponentiation(a, b, c):#returns a^b mod c
         a = (a * a) % c
     return result
 
+def dsa_public_key_exchange():
+    serialized_data = pickle.dumps(dsa_public_key)
+    message_size = struct.pack("L", len(serialized_data))  #sending my public dsa key to the server...
+    serversocket.sendall(message_size)
+    serversocket.sendall(serialized_data)
+    print(f"client public dsa key : {dsa_public_key}")
+
+
+    message_size2 = serversocket.recv(struct.calcsize("L")) #getting server's public dsa key
+    message_size2 = struct.unpack("L", message_size2)[0]
+    data = b""
+    while len(data) < message_size2:
+        packet = serversocket.recv(message_size2 - len(data))
+        if not packet:
+            break
+        data += packet
+    serverdsa_key = pickle.loads(data)
+    print(f"server public dsa key : {serverdsa_key}")
+
+    global server_dsa_public_key
+    server_dsa_public_key=DSA.import_key(serverdsa_key)  #storing the server's key
+    global verifier
+    verifier = DSS.new(server_dsa_public_key, 'fips-186-3')
+
+
 def init_conn():
     global secret_key
     secret_key=diffie_key_exchange()
+    dsa_public_key_exchange()
     thread = threading.Thread(target=send_thread)
     thread.start()
     print("send thread started")
