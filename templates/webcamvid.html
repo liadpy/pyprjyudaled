@@ -85,7 +85,7 @@
     
 <div class="page_container">
   <div>
-    <h3>roomname : {{roomname}} | roompassword : {{roompassword}}</h3><br>
+    <h3>roomname : {{roomname}} | roompassword : {{roompassword}} | server ip : {{serverip}} | server port : {{port}}</h3><br>
     <div class="grid-container">
       <div ><video autoplay="true" id="videoElement1" class="vid" ></video></div>
       <div ><video autoplay="true" id="videoElement2" class="vid" ></video></div>
@@ -93,7 +93,6 @@
       <div ><video autoplay="true" id="videoElement4" class="vid" ></video></div>
       <form method="POST">
         <div>
-          <button name="opnvid">open video</button>
         </div>
       </form>
     </div>
@@ -119,16 +118,6 @@
 
       const messages = document.getElementById("chat-container");
 
-      navigator.mediaDevices.getUserMedia({ video: true })
-        .then(function (stream) {
-          var video = document.getElementById('videoElement1');
-          video.srcObject = stream;
-          socketio.emit('stream', stream);
-        })
-        .catch(function (error) {
-          console.log(error);
-        });
-
       const createMessage = (name, msg) => { //create new msg to apper in chat
         //document.write("fadsffdsafafsda");
         const content = `
@@ -145,11 +134,6 @@
         createMessage(data.name, data.message);
       }); 
 
-
-      socketio.on('stream', function (stream) {
-        var vid = document.getElementById('videoElement2');
-        vid.srcObject = stream;
-      });
 
       const sendtxtMessage=()=>{                  //sendtxtMessage func
         const message = document.getElementById("txtinptchat");

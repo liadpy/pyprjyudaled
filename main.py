@@ -1,13 +1,16 @@
-from flask import Flask, render_template ,redirect , request , url_for,Response,session
+from flask import Flask, render_template ,redirect , request , url_for,session
 from alldb import *
-from vidserver import *
-from flask_socketio import SocketIO,send ,emit,join_room,leave_room
-
+from flask_socketio import SocketIO,send ,join_room,leave_room
+import socket
+#import threading
+import subprocess
 
 app=Flask(__name__) 
 app.secret_key="hellothere"
 socketio = SocketIO(app,cors_allowed_origins="*")
 roomdict={}
+port=2000
+server_file_path="vidserver.py"
 
 
 @app.route('/',methods=["POST","GET"])
@@ -22,8 +25,13 @@ def main():
             password = request.form["crroompassword"]
             con =add_room_to_db(roomname,password,session["userid"])
             if "nice" in con:
+                global port
                 roomid=roomname+password
-                roomdict[roomid]={"members":0,"msgs":[]}
+                roomdict[roomid]={"members":0,"msgs":[],"port":port} #creating new mini vidserver
+               #thread = threading.Thread(target=listen_to_new_clients, args=(roomdict[roomid]["port"],))
+               #thread.start()
+                subprocess.Popen(['python', server_file_path, str(port), str(roomname),str(password)])
+                port+=1
                 session["room"]=roomid
                 session["roompassword"]=password
                 return redirect(url_for("room",room=roomname))
@@ -50,11 +58,8 @@ def main():
 def room(room):#room var is the room name 
     if "room" not in session:
         return redirect(url_for('main'))
-    if request.method == 'POST':
-        if 'opnvid' in request.form:
-            print("\n\n\n\nfffffffffffff\n\n\n")
     
-    return render_template("webcamvid.html",roomname=room,roompassword=session.get("roompassword"))
+    return render_template("webcamvid.html",roomname=room,roompassword=session.get("roompassword"),serverip=socket.gethostbyname(socket.gethostname()),port=roomdict[session.get("room")]["port"])
 
 
 
@@ -112,15 +117,6 @@ def register():
             usr=session["username"]
         return render_template('registerpage.html',username=usr)
 
-
-
-@socketio.on('stream')
-def stream(stream):
-    roomid=session.get("room")
-    if roomid not in roomdict:
-        return
-    socketio.emit('stream', stream, room=roomid)
-    print(f"{session.get('username')} sent the stream")
 
 
 @socketio.on("txtmessage")

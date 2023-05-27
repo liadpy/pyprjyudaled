@@ -1,4 +1,4 @@
-import math
+import sys
 import pickle
 import socket
 import struct
@@ -15,15 +15,19 @@ semaphore = threading.Semaphore(1)
 
 clients_tuple_list=[]
 
+arguments = sys.argv[1:]#[port, roomname,passwd]
 
-MAINPORT=1111
+MAINPORT=int(arguments[0])
+roomname=arguments[1]
+roompassword=arguments[2]
 IP=socket.gethostbyname(socket.gethostname())
 MAIN_ADDRESS=(IP,MAINPORT)
 HEADER=64
 FORMAT='utf-8'
 G=2243 #two big primes
 N=1399
-
+print("IM HEREEEEEEEEEEEEEEEIM HEREEEEEEEEEEEEEEEIM HEREEEEEEEEEEEEEEEIM HEREEEEEEEEEEEEEEEIM HEREEEEEEEEEEEEEEE")
+print(f"{arguments}!!!!!!!!!!!!!!!!!!!!")
 s=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
 s.bind(MAIN_ADDRESS)
 
