@@ -33,6 +33,35 @@ def check_if_can_join_room(roomname,password,usrid):
     return str.lower("room not found :(   make sure you have the correct password and the correct roomname")
 
 
+def check_if_userid_in_the_room(usrid,roomname,roompassword):
+
+    db=mysql.connector.connect(
+    host="localhost",
+    user="root",
+    passwd="meshpuk2133meshpuk2133",
+    database="medb"
+    )
+    c=db.cursor() #cursor is like something that allows me to do things with the database /////id room_name room_password user_opened time_opened connected_users
+    c.execute("CREATE DATABASE IF NOT EXISTS medb")
+    c.execute("""CREATE TABLE IF NOT EXISTS rooms(
+                  id INT AUTO_INCREMENT PRIMARY KEY,
+                   roomname VARCHAR(50) NOT NULL,
+                   roompassword VARCHAR(50) NOT NULL,
+                   userid_opened VARCHAR(50) NOT NULL,
+                   time_opened VARCHAR(50) NOT NULL,
+                   date_opened DATE NOT NULL ,
+                   connected_users VARCHAR(50) NOT NULL,
+                   status VARCHAR(50) NOT NULL
+                    );""")
+    c.execute("SELECT * FROM rooms")
+    x=c.fetchall()
+    for i in x:
+        if(roomname in i and roompassword in i and str(usrid) in i[-2]):
+            return "nice"
+    return "user not in the room"
+
+
+
 
 def add_room_to_db(roomname,password,usrid):
     if check_if_input_ok_for_db(roomname) and check_if_input_ok_for_db(password):

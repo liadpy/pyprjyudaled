@@ -21,7 +21,8 @@ G=2243 #two big primes
 N=1399
 secret_key=None
 
-username="kkk"
+password=None
+username=None
 vid_intention="vid"
 
 dsa_key = DSA.generate(2048)
@@ -39,14 +40,13 @@ column=1
 mylabel.grid(row=row, column=0)
 labelsdict={}
 
-SERVER_MAINPORT=1111
+SERVER_MAINPORT=None
 HEADER=64
 FORMAT='utf-8'
-SERVER_IP="192.168.1.174"
-SERVER_ADDR=(SERVER_IP,SERVER_MAINPORT)
+SERVER_IP=None
+SERVER_ADDR=None
 
-serversocket=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
-serversocket.connect(SERVER_ADDR)
+serversocket=None
 
 cap = cv2.VideoCapture(0)
 
@@ -222,6 +222,31 @@ def dsa_public_key_exchange():
 
 
 def init_conn():
+    global username
+    global SERVER_IP
+    global SERVER_MAINPORT
+    global password
+    global SERVER_ADDR
+    global serversocket
+    while True:
+        username = input("enter username")
+        password = input("enter user password")
+        SERVER_MAINPORT = int(input("enter server port"))
+        SERVER_IP = input("enter server ip")
+        SERVER_ADDR=(SERVER_IP, SERVER_MAINPORT)
+        try:
+            serversocket=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            serversocket.connect(SERVER_ADDR)
+            send_message_to_server(username)
+            send_message_to_server(password)
+            server_output=recv_msg_from_server()
+            if server_output!="nice":
+                print(server_output)
+            else:
+                break
+        except Exception as e:
+            print(e)
+
     global secret_key
     secret_key=diffie_key_exchange()
     dsa_public_key_exchange()

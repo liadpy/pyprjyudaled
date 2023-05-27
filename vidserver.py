@@ -5,6 +5,7 @@ import struct
 import threading
 import secrets
 import hashlib
+from alldb import *
 from Crypto.Cipher import AES
 
 from Crypto.PublicKey import DSA
@@ -176,8 +177,20 @@ def listen_to_new_clients():
     print(f"[SERVER LISTENING ON {IP}]")
     while True:
         conn, addr = s.accept()  # waiting on this line till some1 connects
-        thread = threading.Thread(target=handle_client_thread, args=(conn, addr))
-        thread.start()
-        print(f'[ACTIVE THREADS]......{threading.active_count() - 1} threads/users')
+        username=recv_msg_from_client(conn, addr)
+        password=recv_msg_from_client(conn, addr)
+        usrid=loginusr(username,password)
+        if usrid:
+            usrid=usrid[0]
+            output=check_if_userid_in_the_room(usrid,roomname,roompassword)
+        else:
+            output="usr not exists"
+        send_msg_to_client(conn ,addr,output)
+        if output=="nice":
+            thread = threading.Thread(target=handle_client_thread, args=(conn, addr))
+            thread.start()
+            print(f'[ACTIVE THREADS]......{threading.active_count() - 1} threads/users')
+        else:
+            conn.close()
 
 listen_to_new_clients()
